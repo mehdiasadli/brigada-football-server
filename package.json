@@ -6,12 +6,12 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "NODE_OPTIONS=\"--max-old-space-size=512\" nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "node --max-old-space-size=1024 dist/main",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node --max-old-space-size=1024 dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -23,9 +23,10 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
+    "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "migrate:deploy": "prisma migrate deploy && prisma generate",
-    "postinstall": "prisma generate"
+    "postinstall": "NODE_OPTIONS=\"--max-old-space-size=512\" prisma generate"
   },
   "dependencies": {
     "@faker-js/faker": "^9.8.0",
