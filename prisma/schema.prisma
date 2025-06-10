@@ -1,0 +1,446 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm]
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id                      String                   @id @default(uuid())
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+  deletedAt               DateTime?                @map("deleted_at") // soft delete
+  email                   String                   @unique
+  username                String                   @unique
+  password                String
+  firstName               String
+  lastName                String
+  avatar                  String?
+  mobileNumber            String                   @unique @map("mobile_number")
+  role                    UserRole                 @default(USER)
+  dateOfBirth             DateTime                 @map("date_of_birth")
+  gender                  Gender                   @default(MALE)
+  placeOfBirth            String                   @map("place_of_birth")
+  emailVerifiedAt         DateTime?                @map("email_verified_at")
+  invalidPasswordAttempts Int                      @default(0) @map("invalid_password_attempts")
+  played                  Player[]
+  preferences             UserPreferences?
+  createdMatches          Match[]
+  sentInvitations         Invitation[]             @relation("Sender")
+  receivedInvitations     Invitation[]             @relation("Receiver")
+  createdVenues           Venue[]
+  posts                   Post[]
+  likes                   Like[]
+  comments                Comment[]
+  mentions                Mention[]
+  sentFriendships         Friendship[]             @relation("FriendshipRequester")
+  receivedFriendships     Friendship[]             @relation("FriendshipReceiver")
+  votes                   PollOptionVote[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+
+  @@index([email])
+  @@index([username])
+  @@index([role])
+  @@map("users")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model UserPreferences {
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  preferredPositions PlayerPosition[]
+  notifications      Boolean          @default(true) // in app notifications
+  emailNotifications Boolean          @default(true) @map("email_notifications") // email notifications
+
+  @@map("user_preferences")
+}
+
+model Match {
+  id                     String                 @id @default(uuid())
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  status                 MatchStatus            @default(PENDING)
+  startTime              DateTime               @map("start_time")
+  duration               Int                    @default(60) @map("duration") // in minutes
+  description            String?
+  isPrivate              Boolean                @default(false) @map("is_private")
+  weatherCondition       WeatherCondition?      @map("weather_condition")
+  price                  Int?                   @map("price")
+  teams                  Team[]
+  venueId                String?                @map("venue_id")
+  venue                  Venue?                 @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  venueName              String?                @map("venue_name") // in case venue is deleted
+  creatorId              String?                @map("creator_id")
+  creator                User?                  @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  invitations            Invitation[]
+  asPostAttachment       PostAttachment[]
+  asPollOptionAttachment PollOptionAttachment[]
+
+  @@index([status])
+  @@map("matches")
+}
+
+model Team {
+  id                     String                 @id @default(uuid())
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  name                   String?
+  matchId                String                 @map("match_id")
+  match                  Match                  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  players                Player[]
+  asPostAttachment       PostAttachment[]
+  asPollOptionAttachment PollOptionAttachment[]
+
+  @@index([matchId])
+  @@map("teams")
+}
+
+model Player {
+  id                     String                 @id @default(uuid())
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  teamId                 String                 @map("team_id")
+  team                   Team                   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId                 String?                @map("user_id")
+  user                   User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name                   String
+  isCaptain              Boolean                @default(false) @map("is_captain")
+  positions              PlayerPosition[]
+  goals                  Int                    @default(0)
+  assists                Int                    @default(0)
+  rating                 Float?
+  asPostAttachment       PostAttachment[]
+  asPollOptionAttachment PollOptionAttachment[]
+
+  @@index([teamId])
+  @@map("players")
+}
+
+model Invitation {
+  id           String           @id @default(uuid())
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  matchId      String           @map("match_id")
+  match        Match            @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  senderId     String           @map("sender_id")
+  sender       User             @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId   String           @map("receiver_id")
+  receiver     User             @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  status       InvitationStatus @default(PENDING)
+  message      String?
+  respondedAt  DateTime?        @map("responded_at")
+  responseNote String?          @map("response_note")
+
+  @@map("invitations")
+}
+
+model Venue {
+  id                     String                 @id @default(uuid())
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  name                   String                 @unique
+  address                String
+  addressDescription     String?                @map("address_description")
+  hasParking             Boolean                @default(false) @map("has_parking")
+  hasShowers             Boolean                @default(true) @map("has_showers")
+  isIndoor               Boolean                @default(false) @map("is_indoor")
+  pricePerHour           Int                    @default(0) @map("price_per_hour")
+  contactName            String?                @map("contact_name")
+  contactPhone           String?                @map("contact_phone")
+  latitude               Float
+  longitude              Float
+  creatorId              String?                @map("creator_id")
+  creator                User?                  @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  matches                Match[]
+  asPostAttachment       PostAttachment[]
+  asPollOptionAttachment PollOptionAttachment[]
+
+  @@index([name])
+  @@map("venues")
+}
+
+model Post {
+  id               String           @id @default(uuid())
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  editedAt         DateTime?        @map("edited_at") // content edited at
+  authorId         String           @map("author_id")
+  author           User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  visibility       PostVisibility   @default(PUBLIC)
+  content          String
+  images           String[]
+  isPinned         Boolean          @default(false) @map("is_pinned") // pinned on profile feed
+  likes            Like[]
+  comments         Comment[]
+  attachments      PostAttachment[] @relation("Post")
+  asPostAttachment PostAttachment[] @relation("Attachment")
+  mentions         Mention[]
+  poll             Poll?
+
+  @@index([authorId])
+  @@map("posts")
+}
+
+model Comment {
+  id               String           @id @default(uuid())
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  editedAt         DateTime?        @map("edited_at") // content edited at  
+  content          String
+  authorId         String           @map("author_id")
+  author           User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postId           String           @map("post_id")
+  post             Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likes            Like[]
+  asPostAttachment PostAttachment[]
+
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String?  @map("post_id")
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId String?  @map("comment_id")
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  type      LikeType
+
+  @@unique([userId, postId, commentId])
+  @@map("likes")
+}
+
+model PostAttachment {
+  id        String         @id @default(uuid())
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  postId    String         @map("post_id")
+  post      Post           @relation("Post", fields: [postId], references: [id], onDelete: Cascade)
+  type      AttachmentType
+
+  // AttachmentType = MATCH
+  matchId        String?  @map("match_id")
+  match          Match?   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  // AttachmentType = PLAYER
+  playerId       String?  @map("player_id")
+  player         Player?  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  // AttachmentType = VENUE
+  venueId        String?  @map("venue_id")
+  venue          Venue?   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  // AttachmentType = POST
+  attachedPostId String?  @map("attached_post_id")
+  attachedPost   Post?    @relation("Attachment", fields: [attachedPostId], references: [id], onDelete: Cascade)
+  // AttachmentType = COMMENT
+  commentId      String?  @map("comment_id")
+  comment        Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  // AttachmentType = TEAM
+  teamId         String?  @map("team_id")
+  team           Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("post_attachments")
+}
+
+model Mention {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  postId    String   @map("post_id")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("mentions")
+}
+
+model Poll {
+  id          String       @id @default(uuid())
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  postId      String       @unique @map("post_id")
+  post        Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  options     PollOption[]
+  content     String
+  maxVotes    Int          @default(1) @map("max_votes")
+  isAnonymous Boolean      @default(false) @map("is_anonymous") // if true, the poll will be anonymous
+
+  @@map("polls")
+}
+
+model PollOption {
+  id         String                @id @default(uuid())
+  createdAt  DateTime              @default(now()) @map("created_at")
+  updatedAt  DateTime              @updatedAt @map("updated_at")
+  pollId     String                @map("poll_id")
+  poll       Poll                  @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes      PollOptionVote[]
+  content    String?
+  image      String?
+  attachment PollOptionAttachment?
+
+  @@map("poll_options")
+}
+
+model PollOptionAttachment {
+  id           String                   @id @default(uuid())
+  createdAt    DateTime                 @default(now()) @map("created_at")
+  updatedAt    DateTime                 @updatedAt @map("updated_at")
+  type         PollOptionAttachmentType
+  pollOptionId String                   @unique @map("poll_option_id")
+  pollOption   PollOption               @relation(fields: [pollOptionId], references: [id], onDelete: Cascade)
+
+  // PollOptionAttachmentType = MATCH
+  matchId  String? @map("match_id")
+  match    Match?  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  // PollOptionAttachmentType = PLAYER
+  playerId String? @map("player_id")
+  player   Player? @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  // PollOptionAttachmentType = VENUE
+  venueId  String? @map("venue_id")
+  venue    Venue?  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  // PollOptionAttachmentType = TEAM
+  teamId   String? @map("team_id")
+  team     Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("poll_option_attachments")
+}
+
+model PollOptionVote {
+  id        String     @id @default(uuid())
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  optionId  String     @map("poll_option_id")
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String     @map("user_id")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, userId])
+  @@map("poll_option_votes")
+}
+
+model Friendship {
+  id          String           @id @default(uuid())
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  requesterId String           @map("requester_id")
+  requester   User             @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiverId  String           @map("receiver_id")
+  receiver    User             @relation("FriendshipReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  status      FriendshipStatus @default(PENDING)
+  points      Int              @default(0) @map("points") // points for the friendship
+
+  @@unique([requesterId, receiverId])
+  @@map("friendships")
+}
+
+enum LikeType {
+  POST
+  COMMENT
+}
+
+enum AttachmentType {
+  MATCH
+  PLAYER
+  VENUE
+  POST
+  COMMENT
+  TEAM
+}
+
+enum PollOptionAttachmentType {
+  MATCH
+  PLAYER
+  VENUE
+  TEAM
+}
+
+enum MatchStatus {
+  PENDING
+  COMPLETED
+}
+
+enum PlayerPosition {
+  GOALKEEPER
+  DEFENDER
+  MIDFIELDER
+  FORWARD
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum InvitationStatus {
+  PENDING // when user is invited to a match
+  ACCEPTED // when user accepts an invitation
+  DECLINED // when user declines an invitation
+  CANCELED // when sender cancels the invitation
+}
+
+enum WeatherCondition {
+  SUNNY
+  CLOUDY
+  RAINY
+  SNOWY
+  WINDY
+  FOGGY
+  STORMY
+  OTHER
+}
+
+enum PostVisibility {
+  PUBLIC // visible to everyone
+  FRIENDS // only visible to friends
+  PRIVATE // only visible to the creator
+}
+
+enum FriendshipStatus {
+  PENDING // when user sends a friend request
+  ACCEPTED // when user accepts a friend request
+  REJECTED // when user rejects a friend request
+  CANCELED // when user cancels a friend request
+  BLOCKED // when user blocks another user
+}
