@@ -7,18 +7,18 @@ import { MatchesModule } from './matches/matches.module';
 import { MatchResultsModule } from './match-results/match-results.module';
 import { TeamsModule } from './teams/teams.module';
 import { PlayersModule } from './players/players.module';
-import { InvitationsModule } from './invitations/invitations.module';
-import { VenuesModule } from './venues/venues.module';
-import { FriendshipsModule } from './friendships/friendships.module';
-import { PostsModule } from './posts/posts.module';
-import { CommentsModule } from './comments/comments.module';
-import { LikesModule } from './likes/likes.module';
-import { MentionsModule } from './mentions/mentions.module';
-import { PostAttachmentsModule } from './post-attachments/post-attachments.module';
-import { PollsModule } from './polls/polls.module';
-import { PollOptionsModule } from './poll-options/poll-options.module';
-import { PollOptionVotesModule } from './poll-option-votes/poll-option-votes.module';
-import { PollOptionAttachmentsModule } from './poll-option-attachments/poll-option-attachments.module';
+// import { InvitationsModule } from './invitations/invitations.module';
+// import { VenuesModule } from './venues/venues.module';
+// import { FriendshipsModule } from './friendships/friendships.module';
+// import { PostsModule } from './posts/posts.module';
+// import { CommentsModule } from './comments/comments.module';
+// import { LikesModule } from './likes/likes.module';
+// import { MentionsModule } from './mentions/mentions.module';
+// import { PostAttachmentsModule } from './post-attachments/post-attachments.module';
+// import { PollsModule } from './polls/polls.module';
+// import { PollOptionsModule } from './poll-options/poll-options.module';
+// import { PollOptionVotesModule } from './poll-option-votes/poll-option-votes.module';
+// import { PollOptionAttachmentsModule } from './poll-option-attachments/poll-option-attachments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { appConfig } from './_common/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -56,20 +56,21 @@ import { StatsModule } from './stats/stats.module';
     MatchResultsModule,
     TeamsModule,
     PlayersModule,
-    InvitationsModule,
-    VenuesModule,
-    FriendshipsModule,
-    PostsModule,
-    CommentsModule,
-    LikesModule,
-    MentionsModule,
-    PostAttachmentsModule,
-    PollsModule,
-    PollOptionsModule,
-    PollOptionVotesModule,
-    PollOptionAttachmentsModule,
     MailModule,
     StatsModule,
+
+    // InvitationsModule,
+    // VenuesModule,
+    // FriendshipsModule,
+    // PostsModule,
+    // CommentsModule,
+    // LikesModule,
+    // MentionsModule,
+    // PostAttachmentsModule,
+    // PollsModule,
+    // PollOptionsModule,
+    // PollOptionVotesModule,
+    // PollOptionAttachmentsModule,
   ],
   controllers: [AppController],
   providers: [
