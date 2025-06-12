@@ -11,7 +11,7 @@ import {
 import { VenuesService } from './venues.service';
 import { PaginationDto } from 'src/_common/lib/query.pagination';
 import { OrderDto } from 'src/_common/lib/query.order';
-import { SearchDto } from 'src/_common/lib/query.search';
+// import { SearchDto } from 'src/_common/lib/query.search';
 import { CreateVenueDto } from './dto/create-venue.dto';
 import { CurrentUser } from 'src/_common/decorators/current-user.decorator';
 import { UpdateVenueDto } from './dto/update-venue.dto';
@@ -20,13 +20,34 @@ import { UpdateVenueDto } from './dto/update-venue.dto';
 export class VenuesController {
   constructor(private readonly venuesService: VenuesService) {}
 
+  @Post('mock')
+  async createMock(
+    @CurrentUser() currentUserId: string,
+    @Query('count') count?: string,
+  ) {
+    return this.venuesService.createMock(
+      count ? parseInt(count) : 10,
+      currentUserId,
+    );
+  }
+
   @Get()
   async findMany(
     @Query() paginationDto: PaginationDto,
     @Query() orderDto: OrderDto,
-    @Query() searchDto: SearchDto,
+    // @Query() searchDto: SearchDto,
   ) {
-    return this.venuesService.findMany(paginationDto, orderDto, searchDto);
+    return this.venuesService.findMany(paginationDto, orderDto);
+  }
+
+  @Get('map')
+  async getVenuesForMap() {
+    return this.venuesService.getVenuesForMap();
+  }
+
+  @Get('search')
+  async searchVenues(@Query('query') query: string) {
+    return this.venuesService.searchVenues(query);
   }
 
   @Get(':id')

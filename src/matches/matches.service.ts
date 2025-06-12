@@ -23,6 +23,39 @@ export class MatchesService {
     private readonly teamsService: TeamsService,
   ) {}
 
+  async getMatchesStats() {
+    const totalMatches = await this.prisma.match.count({
+      where: {
+        status: MatchStatus.COMPLETED,
+      },
+    });
+
+    const completedMatchesInThisMonth = await this.prisma.match.count({
+      where: {
+        status: MatchStatus.COMPLETED,
+        createdAt: {
+          gte: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+        },
+      },
+    });
+
+    const completedMatchesInLastMonth = await this.prisma.match.count({
+      where: {
+        status: MatchStatus.COMPLETED,
+        createdAt: {
+          gte: new Date(new Date().setMonth(new Date().getMonth() - 2)),
+          lte: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+        },
+      },
+    });
+
+    return {
+      totalMatches,
+      completedMatchesInThisMonth,
+      completedMatchesInLastMonth,
+    };
+  }
+
   async calculateCreatedMatchesCount(userId: string) {
     return await this.prisma.match.count({
       where: {
@@ -96,6 +129,14 @@ export class MatchesService {
     return await this.prisma.match.findUnique({
       where: { id },
       include: {
+        venue: {
+          select: {
+            id: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+          },
+        },
         teams: {
           select: {
             id: true,
@@ -155,6 +196,7 @@ export class MatchesService {
           },
           venue: {
             select: {
+              id: true,
               name: true,
               address: true,
               addressDescription: true,

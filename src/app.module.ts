@@ -31,6 +31,7 @@ import { AuthModule } from './auth/auth.module';
 import { ResponseInterceptor } from './_common/interceptors/respose.interceptor';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { StatsModule } from './stats/stats.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { StatsModule } from './stats/stats.module';
     PlayersModule,
     MailModule,
     StatsModule,
+    DashboardModule,
 
     // InvitationsModule,
     // VenuesModule,

@@ -12,7 +12,7 @@ import { UpdateRoleDto, UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Crypt } from 'src/_common/crypt';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
-import { User, UserRole } from '@prisma/client';
+import { MatchStatus, User, UserRole } from '@prisma/client';
 import { SearchBuilder, SearchDto } from 'src/_common/lib/query.search';
 import { OrderBuilder, OrderDto } from 'src/_common/lib/query.order';
 import {
@@ -45,6 +45,155 @@ export class UsersService {
       dateOfBirth: user.dateOfBirth,
       placeOfBirth: user.placeOfBirth,
     } as unknown as T;
+  }
+
+  async getCreatedChart() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    const startDate = new Date(currentYear - 1, currentMonth - 1, 1);
+    const endDate = new Date(
+      currentYear,
+      currentMonth - 1,
+      now.getDate(),
+      23,
+      59,
+      59,
+    );
+
+    const usersCreated = await this.prisma.user.findMany({
+      where: {
+        deletedAt: null,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+      },
+    });
+
+    const usersWhoCreatedMatches = await this.prisma.user.findMany({
+      where: {
+        deletedAt: null,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        createdMatches: {
+          some: {
+            createdAt: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+      },
+    });
+
+    const usersWhoPlayedMatches = await this.prisma.user.findMany({
+      where: {
+        deletedAt: null,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        played: {
+          some: {
+            team: {
+              match: {
+                status: MatchStatus.COMPLETED,
+                createdAt: {
+                  gte: startDate,
+                  lte: endDate,
+                },
+              },
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+      },
+    });
+
+    const monthlyData: any[] = [];
+
+    for (let i = 11; i >= 0; i--) {
+      const targetDate = new Date(currentYear, currentMonth - 1 - i, 1);
+      const targetMonth = targetDate.getMonth() + 1; // Convert to 1-12
+      const targetYear = targetDate.getFullYear();
+
+      const monthStart = new Date(targetYear, targetMonth - 1, 1);
+      const monthEnd = new Date(targetYear, targetMonth, 0, 23, 59, 59); // Last day of month
+
+      const usersCreatedCount = usersCreated.filter((user) => {
+        const userCreatedAt = new Date(user.createdAt);
+        return userCreatedAt >= monthStart && userCreatedAt <= monthEnd;
+      }).length;
+
+      const usersWhichHaveCreatedMatch = usersWhoCreatedMatches.filter(
+        (user) => {
+          const userCreatedAt = new Date(user.createdAt);
+          return userCreatedAt >= monthStart && userCreatedAt <= monthEnd;
+        },
+      ).length;
+
+      const usersWhichHavePlayedMatch = usersWhoPlayedMatches.filter((user) => {
+        const userCreatedAt = new Date(user.createdAt);
+        return userCreatedAt >= monthStart && userCreatedAt <= monthEnd;
+      }).length;
+
+      monthlyData.push({
+        month: targetMonth,
+        usersCreatedCount,
+        usersWhichHaveCreatedMatch,
+        usersWhichHavePlayedMatch,
+      });
+    }
+
+    return monthlyData;
+  }
+
+  async getUsersStats() {
+    const totalUsers = await this.prisma.user.count({
+      where: {
+        deletedAt: null,
+      },
+    });
+
+    const usersInThisMonth = await this.prisma.user.count({
+      where: {
+        deletedAt: null,
+        createdAt: {
+          gte: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+        },
+      },
+    });
+
+    const usersInLastMonth = await this.prisma.user.count({
+      where: {
+        deletedAt: null,
+        createdAt: {
+          gte: new Date(new Date().setMonth(new Date().getMonth() - 2)),
+          lte: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+        },
+      },
+    });
+
+    return {
+      totalUsers,
+      usersInThisMonth,
+      usersInLastMonth,
+    };
   }
 
   async searchUsersForMatch(query: string, excludeIds: string | string[] = []) {

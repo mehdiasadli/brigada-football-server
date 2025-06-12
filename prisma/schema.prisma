@@ -183,7 +183,7 @@ model Venue {
   addressDescription     String?                @map("address_description")
   hasParking             Boolean                @default(false) @map("has_parking")
   hasShowers             Boolean                @default(true) @map("has_showers")
-  isIndoor               Boolean                @default(false) @map("is_indoor")
+  type                   VenueType              @default(INDOOR_OUTDOOR)
   pricePerHour           Int                    @default(0) @map("price_per_hour")
   contactName            String?                @map("contact_name")
   contactPhone           String?                @map("contact_phone")
@@ -443,4 +443,10 @@ enum FriendshipStatus {
   REJECTED // when user rejects a friend request
   CANCELED // when user cancels a friend request
   BLOCKED // when user blocks another user
+}
+
+enum VenueType {
+  INDOOR
+  OUTDOOR
+  INDOOR_OUTDOOR
 }

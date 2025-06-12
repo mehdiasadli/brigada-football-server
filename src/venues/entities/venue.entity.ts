@@ -1,3 +1,4 @@
+import { VenueType } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -10,7 +11,7 @@ export const venueSchema = z.object({
   addressDescription: z.string().nullish(),
   hasParking: z.boolean().default(false),
   hasShowers: z.boolean().default(true),
-  isIndoor: z.boolean().default(false),
+  type: z.nativeEnum(VenueType),
   pricePerHour: z.number().positive(),
   contactName: z.string().nullish(),
   contactPhone: z.string().nullish(),
