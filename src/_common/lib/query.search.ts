@@ -4,8 +4,9 @@ import { z } from 'zod';
 export const searchSchema = z.object({
   query: z
     .string()
-    .min(1, 'Search query must be at least 1 character')
     .max(100, 'Search query must be less than 100 characters')
+    .transform((val) => val.trim())
+    .transform((val) => (val === '' ? undefined : val))
     .optional(),
   fields: z
     .array(z.string())

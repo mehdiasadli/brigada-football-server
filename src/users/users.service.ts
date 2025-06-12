@@ -456,6 +456,12 @@ export class UsersService {
       this.prisma.user.findMany({
         ...pagination.use(),
         orderBy: order.use(),
+        omit: {
+          password: true,
+          updatedAt: true,
+          deletedAt: true,
+          mobileNumber: true,
+        },
         where: {
           deletedAt: null,
           ...search.buildWhere({
@@ -547,6 +553,62 @@ export class UsersService {
     });
   }
 
+  private canDeleteUser(
+    currentUserRole: UserRole,
+    targetUserRole: UserRole,
+    currentUserId: string,
+    targetUserId: string,
+  ) {
+    const isSelfDelete = currentUserId === targetUserId;
+
+    switch (currentUserRole) {
+      case UserRole.USER:
+      case UserRole.MODERATOR:
+        return isSelfDelete;
+      case UserRole.ADMIN:
+        if (isSelfDelete) return true;
+        return (
+          targetUserRole === UserRole.USER ||
+          targetUserRole === UserRole.MODERATOR
+        );
+      case UserRole.SUPER_ADMIN:
+        if (isSelfDelete) return true;
+        return targetUserRole !== UserRole.SUPER_ADMIN;
+      default:
+        return false;
+    }
+  }
+
+  async delete(id: string, currentUserId: string) {
+    const user = await this.findOne(id);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const currentUser = await this.findOne(currentUserId);
+
+    if (!currentUser) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    if (!this.canDeleteUser(currentUser.role, user.role, currentUserId, id)) {
+      throw new ForbiddenException(
+        'You are not authorized to delete this user',
+      );
+    }
+
+    return await this.prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  // full removing
   async remove(id: string) {
     return await this.prisma.user.delete({
       where: {

@@ -1,4 +1,13 @@
-import { Controller, Get, Param, Put, Body, Query, Post } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Put,
+  Body,
+  Query,
+  Post,
+  Delete,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateRoleDto } from './dto/update-user.dto';
 import { CurrentUser } from 'src/_common/decorators/current-user.decorator';
@@ -53,5 +62,12 @@ export class UsersController {
     @CurrentUser() currentUserId: string,
   ) {
     return this.usersService.updateRole(id, updateRoleDto, currentUserId);
+  }
+
+  // Delete a user
+  @Delete(':id')
+  delete(@Param('id') id: string, @CurrentUser() currentUserId: string) {
+    console.log('HERE');
+    return this.usersService.delete(id, currentUserId);
   }
 }
