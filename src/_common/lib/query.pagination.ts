@@ -54,10 +54,10 @@ export class PaginationBuilder {
     return (this.page - 1) * this.limit;
   }
 
-  public use() {
+  public use(override?: { skip?: number; take?: number }) {
     return {
-      skip: this.skip,
-      take: this.limit,
+      skip: override?.skip ?? this.skip,
+      take: override?.take ?? this.limit,
     } as const;
   }
 

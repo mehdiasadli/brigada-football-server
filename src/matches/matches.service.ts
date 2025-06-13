@@ -25,32 +25,100 @@ export class MatchesService {
     private readonly friendshipsService: FriendshipsService,
   ) {}
 
-  async getMatchesForFeed(currentUserId: string) {
+  async getMatchesForFeed(currentUserId: string, paginationDto: PaginationDto) {
+    const pagination = new PaginationBuilder(paginationDto);
+
     const friends =
       await this.friendshipsService.getFriendsOfUser(currentUserId);
     const friendIds = friends.map((friend) => friend.id);
 
-    const matches = await this.prisma.match.findMany({
-      where: {
-        OR: [
-          { creatorId: currentUserId },
-          { creatorId: { in: friendIds } },
-          {
-            teams: {
-              some: {
-                players: {
-                  some: {
-                    userId: currentUserId,
+    const [matches, total] = await Promise.all([
+      await this.prisma.match.findMany({
+        ...pagination.use(),
+        where: {
+          OR: [
+            { creatorId: currentUserId },
+            { creatorId: { in: friendIds } },
+            {
+              teams: {
+                some: {
+                  players: {
+                    some: {
+                      userId: currentUserId,
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+              username: true,
+            },
+          },
+          venue: {
+            select: {
+              id: true,
+              name: true,
+              latitude: true,
+              longitude: true,
+            },
+          },
+          teams: {
+            select: {
+              id: true,
+              name: true,
+              players: {
+                select: {
+                  id: true,
+                  assists: true,
+                  goals: true,
+                  isCaptain: true,
+                  name: true,
+                  positions: true,
+                  rating: true,
+                  user: {
+                    select: {
+                      avatar: true,
+                      firstName: true,
+                      lastName: true,
+                      username: true,
+                    },
                   },
                 },
               },
             },
           },
-        ],
-      },
-    });
+        },
+      }),
+      await this.prisma.match.count({
+        where: {
+          OR: [
+            { creatorId: currentUserId },
+            { creatorId: { in: friendIds } },
+            {
+              teams: {
+                some: {
+                  players: {
+                    some: {
+                      userId: currentUserId,
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      }),
+    ]);
 
-    return matches;
+    return { matches, total };
   }
 
   async getMatchesChart() {

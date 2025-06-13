@@ -3,6 +3,10 @@ import { FriendshipsService } from 'src/friendships/friendships.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UsersService } from 'src/users/users.service';
+import {
+  PaginationBuilder,
+  PaginationDto,
+} from 'src/_common/lib/query.pagination';
 
 @Injectable()
 export class PostsService {
@@ -37,50 +41,60 @@ export class PostsService {
     return post;
   }
 
-  async getPostsForFeed(currentUserId: string) {
+  async getPostsForFeed(currentUserId: string, paginationDto: PaginationDto) {
+    const pagination = new PaginationBuilder(paginationDto);
+
     const friends =
       await this.friendshipsService.getFriendsOfUser(currentUserId);
 
     const friendIds = friends.map((friend) => friend.id);
 
-    const posts = await this.prisma.post.findMany({
-      where: {
-        OR: [{ authorId: currentUserId }, { authorId: { in: friendIds } }],
-      },
-      include: {
-        _count: {
-          select: {
-            comments: true,
+    const [posts, total] = await Promise.all([
+      await this.prisma.post.findMany({
+        ...pagination.use(),
+        where: {
+          OR: [{ authorId: currentUserId }, { authorId: { in: friendIds } }],
+        },
+        include: {
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+          likes: {
+            select: {
+              userId: true,
+            },
+          },
+          attachments: {
+            select: {
+              attachedPost: true,
+              comment: true,
+              match: true,
+              venue: true,
+              team: true,
+              player: true,
+            },
+          },
+          author: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+              username: true,
+            },
           },
         },
-        likes: {
-          select: {
-            userId: true,
-          },
+      }),
+      await this.prisma.post.count({
+        where: {
+          OR: [{ authorId: currentUserId }, { authorId: { in: friendIds } }],
         },
-        attachments: {
-          select: {
-            attachedPost: true,
-            comment: true,
-            match: true,
-            venue: true,
-            team: true,
-            player: true,
-          },
-        },
-        author: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            email: true,
-          },
-        },
-      },
-    });
+      }),
+    ]);
 
-    return posts;
+    return { posts, total };
   }
 
   async createPost(createPostDto: CreatePostDto, currentUserId: string) {
