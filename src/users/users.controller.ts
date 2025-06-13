@@ -34,8 +34,11 @@ export class UsersController {
 
   // Get one user by username
   @Get('with-username/:username')
-  getOneByUsername(@Param('username') username: string) {
-    return this.usersService.getOneByUsername(username);
+  getOneByUsername(
+    @Param('username') username: string,
+    @CurrentUser() currentUserId: string,
+  ) {
+    return this.usersService.getOneByUsername(username, currentUserId);
   }
 
   // Get all users

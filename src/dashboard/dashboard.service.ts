@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { MatchesService } from 'src/matches/matches.service';
+import { PostsService } from 'src/posts/posts.service';
 import { UsersService } from 'src/users/users.service';
 import { VenuesService } from 'src/venues/venues.service';
 
@@ -14,6 +15,7 @@ export class DashboardService {
     private readonly venuesService: VenuesService,
     private readonly usersService: UsersService,
     private readonly matchesService: MatchesService,
+    private readonly postsService: PostsService,
   ) {}
 
   private async checkAdmin(currentUserId: string) {
@@ -39,11 +41,13 @@ export class DashboardService {
     const usersStats = await this.usersService.getUsersStats();
     const venuesStats = await this.venuesService.getVenuesStats();
     const matchesStats = await this.matchesService.getMatchesStats();
+    const postsStats = await this.postsService.getPostsStats();
 
     return {
       usersStats,
       venuesStats,
       matchesStats,
+      postsStats,
     };
   }
 
@@ -58,15 +62,22 @@ export class DashboardService {
     return matchesChart;
   }
 
+  async getDashboardPostsChart() {
+    const postsChart = await this.postsService.getPostsChart();
+    return postsChart;
+  }
+
   async getDashboardCharts(currentUserId: string) {
     await this.checkAdmin(currentUserId);
 
     const usersChart = await this.usersService.getCreatedChart();
     const matchesChart = await this.matchesService.getMatchesChart();
+    const postsChart = await this.postsService.getPostsChart();
 
     return {
       users: usersChart,
       matches: matchesChart,
+      posts: postsChart,
     };
   }
 }

@@ -8,11 +8,11 @@ import { MatchResultsModule } from './match-results/match-results.module';
 import { TeamsModule } from './teams/teams.module';
 import { PlayersModule } from './players/players.module';
 // import { InvitationsModule } from './invitations/invitations.module';
-// import { VenuesModule } from './venues/venues.module';
+import { VenuesModule } from './venues/venues.module';
 import { FriendshipsModule } from './friendships/friendships.module';
 import { PostsModule } from './posts/posts.module';
-// import { CommentsModule } from './comments/comments.module';
-// import { LikesModule } from './likes/likes.module';
+import { CommentsModule } from './comments/comments.module';
+import { LikesModule } from './likes/likes.module';
 // import { MentionsModule } from './mentions/mentions.module';
 // import { PostAttachmentsModule } from './post-attachments/post-attachments.module';
 // import { PollsModule } from './polls/polls.module';
@@ -33,6 +33,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { StatsModule } from './stats/stats.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { FeedModule } from './feed/feed.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -64,11 +65,12 @@ import { FeedModule } from './feed/feed.module';
     FeedModule,
 
     // InvitationsModule,
-    // VenuesModule,
+    VenuesModule,
     FriendshipsModule,
     PostsModule,
-    // CommentsModule,
-    // LikesModule,
+    CommentsModule,
+    LikesModule,
+    SearchModule,
     // MentionsModule,
     // PostAttachmentsModule,
     // PollsModule,

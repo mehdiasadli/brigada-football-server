@@ -20,6 +20,7 @@ import {
   PaginationDto,
 } from 'src/_common/lib/query.pagination';
 import { createMockUsers } from 'src/_common/mock/users';
+import { FriendshipsService } from 'src/friendships/friendships.service';
 
 @Injectable()
 export class UsersService {
@@ -27,6 +28,8 @@ export class UsersService {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => UserPreferencesService))
     private readonly userPreferencesService: UserPreferencesService,
+    @Inject(forwardRef(() => FriendshipsService))
+    private readonly friendshipsService: FriendshipsService,
   ) {}
 
   private publicUser<T extends Partial<User>>(user: T): T {
@@ -45,6 +48,49 @@ export class UsersService {
       dateOfBirth: user.dateOfBirth,
       placeOfBirth: user.placeOfBirth,
     } as unknown as T;
+  }
+
+  async globalSearch(query: string, currentUserId: string) {
+    const users = await this.prisma.user.findMany({
+      where: {
+        NOT: {
+          id: currentUserId,
+        },
+        OR: [
+          {
+            firstName: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            lastName: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            username: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        avatar: true,
+      },
+      take: 3,
+    });
+
+    return users.map((user) => ({
+      item: user,
+      type: 'user' as const,
+    }));
   }
 
   async getCreatedChart() {
@@ -303,16 +349,31 @@ export class UsersService {
     });
   }
 
-  async getOneByUsername(username: string) {
-    // validate username
-
+  async getOneByUsername(username: string, currentUserId: string) {
     const user = await this.findByUsername(username);
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    return this.publicUser(user);
+    const friendship = await this.friendshipsService.getFriendshipWithIds(
+      currentUserId,
+      user.id,
+    );
+
+    const friendshipData = !friendship
+      ? null
+      : {
+          id: friendship.id,
+          status: friendship.status,
+          side:
+            friendship.requesterId === currentUserId ? 'requester' : 'receiver',
+        };
+
+    return {
+      ...this.publicUser(user),
+      friendship: friendshipData,
+    };
   }
 
   async findByMobileNumber(mobileNumber: string) {

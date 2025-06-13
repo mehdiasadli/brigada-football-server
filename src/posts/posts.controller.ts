@@ -1,7 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CurrentUser } from 'src/_common/decorators/current-user.decorator';
+import { PaginationDto } from 'src/_common/lib/query.pagination';
 
 @Controller('posts')
 export class PostsController {
@@ -14,13 +23,24 @@ export class PostsController {
   }
 
   @Get(':id')
-  getPostById(@Param('id') postId: string) {
-    return this.postsService.getPostById(postId);
+  getPostById(
+    @Param('id') postId: string,
+    @CurrentUser() currentUserId: string,
+  ) {
+    return this.postsService.getPostById(postId, currentUserId);
   }
 
-  @Get('user/:userId')
-  getPostsOfUser(@Param('userId') userId: string) {
-    return this.postsService.getPostsOfUser(userId);
+  @Get('user/:username')
+  getPostsOfUser(
+    @Param('username') username: string,
+    @Query() paginationDto: PaginationDto,
+    @CurrentUser() currentUserId: string,
+  ) {
+    return this.postsService.getPostsOfUser(
+      username,
+      currentUserId,
+      paginationDto,
+    );
   }
 
   @Post()
