@@ -1,4 +1,12 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreatePostDto } from './create-post.dto';
+import { postSchema } from '../entities/post.entity';
+import { createZodDto } from 'nestjs-zod';
 
-export class UpdatePostDto extends PartialType(CreatePostDto) {}
+export const updatePostSchema = postSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  editedAt: true,
+  authorId: true,
+});
+
+export class UpdatePostDto extends createZodDto(updatePostSchema) {}

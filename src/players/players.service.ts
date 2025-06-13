@@ -321,9 +321,101 @@ export class PlayersService {
       return await this.create(updatePlayerDto, teamId);
     }
 
-    return await this.prisma.player.update({
+    const currentPlayer = await this.prisma.player.findUnique({
       where: { id: player.id },
-      data: updatePlayerDto,
+      include: { user: true },
     });
+
+    if (!currentPlayer) {
+      throw new NotFoundException('Player not found');
+    }
+
+    const { userId, name, ...rest } = updatePlayerDto;
+
+    const isBecomingUser = !currentPlayer.userId && userId;
+    const isBecomingNonUser = currentPlayer.userId && !userId;
+    const isChangingUser =
+      currentPlayer.userId && userId && currentPlayer.userId !== userId;
+    const isUserValidated = userId
+      ? !!(await this.usersService.findOne(userId))
+      : true;
+
+    if (userId && !isUserValidated) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    const updateData: any = {
+      ...rest,
+      name: name || currentPlayer.name,
+    };
+
+    if (isBecomingNonUser) {
+      // Converting from user to non-user: clear userId, keep manual name
+      updateData.userId = null;
+      updateData.name = name || currentPlayer.name; // Use provided name or keep existing
+
+      console.log(
+        `Player ${id} converting from user to non-user. Name: ${updateData.name}`,
+      );
+    } else if (isBecomingUser || isChangingUser) {
+      // Converting to user or changing user: set userId and update name from user data
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId, deletedAt: null },
+        select: { id: true, firstName: true, lastName: true },
+      });
+
+      if (!user) {
+        throw new NotFoundException(
+          `User with id ${userId} not found or deleted`,
+        );
+      }
+
+      updateData.userId = userId;
+      // Override name with user's full name when assigning a user
+      updateData.name = `${user.firstName} ${user.lastName}`;
+
+      console.log(
+        `Player ${id} converting to user ${userId}. Name updated to: ${updateData.name}`,
+      );
+    } else {
+      // No userId change, just update other fields
+      updateData.userId = currentPlayer.userId;
+      updateData.name = name || currentPlayer.name;
+    }
+
+    // Perform the update
+    const updatedPlayer = await this.prisma.player.update({
+      where: { id: player.id },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    console.log(`Player ${id} updated successfully:`, {
+      name: updatedPlayer.name,
+      userId: updatedPlayer.userId,
+      hasUser: !!updatedPlayer.user,
+    });
+
+    return updatedPlayer;
+  }
+
+  private async validateUser(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+        deletedAt: null,
+      },
+    });
+    return !!user;
   }
 }

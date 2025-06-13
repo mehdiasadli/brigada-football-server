@@ -67,7 +67,6 @@ export class UsersController {
   // Delete a user
   @Delete(':id')
   delete(@Param('id') id: string, @CurrentUser() currentUserId: string) {
-    console.log('HERE');
     return this.usersService.delete(id, currentUserId);
   }
 }

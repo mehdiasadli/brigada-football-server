@@ -13,6 +13,7 @@ import { FindFiltersDto } from './dto/find-filters.dto';
 import { CompleteMatchDto } from './dto/complete-match.dto';
 import { MatchStatus } from '@prisma/client';
 import { createMockMatches } from 'src/_common/mock/matches';
+import { FriendshipsService } from 'src/friendships/friendships.service';
 
 @Injectable()
 export class MatchesService {
@@ -21,7 +22,128 @@ export class MatchesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly teamsService: TeamsService,
+    private readonly friendshipsService: FriendshipsService,
   ) {}
+
+  async getMatchesForFeed(currentUserId: string) {
+    const friends =
+      await this.friendshipsService.getFriendsOfUser(currentUserId);
+    const friendIds = friends.map((friend) => friend.id);
+
+    const matches = await this.prisma.match.findMany({
+      where: {
+        OR: [
+          { creatorId: currentUserId },
+          { creatorId: { in: friendIds } },
+          {
+            teams: {
+              some: {
+                players: {
+                  some: {
+                    userId: currentUserId,
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    return matches;
+  }
+
+  async getMatchesChart() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    const startDate = new Date(currentYear - 1, currentMonth - 1, 1);
+    const endDate = new Date(
+      currentYear,
+      currentMonth - 1,
+      now.getDate(),
+      23,
+      59,
+      59,
+    );
+
+    const matchesCreated = await this.prisma.match.findMany({
+      where: {
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+      },
+    });
+
+    const matchesCompleted = await this.prisma.match.findMany({
+      where: {
+        status: MatchStatus.COMPLETED,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+      },
+    });
+
+    const matchesPending = await this.prisma.match.findMany({
+      where: {
+        status: MatchStatus.PENDING,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+      },
+    });
+
+    const monthlyData: any[] = [];
+
+    for (let i = 11; i >= 0; i--) {
+      const targetDate = new Date(currentYear, currentMonth - 1 - i, 1);
+      const targetMonth = targetDate.getMonth() + 1; // Convert to 1-12
+      const targetYear = targetDate.getFullYear();
+
+      const monthStart = new Date(targetYear, targetMonth - 1, 1);
+      const monthEnd = new Date(targetYear, targetMonth, 0, 23, 59, 59); // Last day of month
+
+      const matchesCreatedCount = matchesCreated.filter((match) => {
+        const matchCreatedAt = new Date(match.createdAt);
+        return matchCreatedAt >= monthStart && matchCreatedAt <= monthEnd;
+      }).length;
+
+      const matchesCompletedCount = matchesCompleted.filter((user) => {
+        const userCreatedAt = new Date(user.createdAt);
+        return userCreatedAt >= monthStart && userCreatedAt <= monthEnd;
+      }).length;
+
+      const matchesPendingCount = matchesPending.filter((match) => {
+        const matchCreatedAt = new Date(match.createdAt);
+        return matchCreatedAt >= monthStart && matchCreatedAt <= monthEnd;
+      }).length;
+
+      monthlyData.push({
+        month: targetMonth,
+        matchesCreatedCount,
+        matchesCompletedCount,
+        matchesPendingCount,
+      });
+    }
+
+    return monthlyData;
+  }
 
   async getMatchesStats() {
     const totalMatches = await this.prisma.match.count({

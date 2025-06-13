@@ -7,5 +7,6 @@ import { UsersModule } from 'src/users/users.module';
   imports: [UsersModule],
   controllers: [FriendshipsController],
   providers: [FriendshipsService],
+  exports: [FriendshipsService],
 })
 export class FriendshipsModule {}

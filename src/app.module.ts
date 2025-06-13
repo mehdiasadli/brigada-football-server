@@ -9,8 +9,8 @@ import { TeamsModule } from './teams/teams.module';
 import { PlayersModule } from './players/players.module';
 // import { InvitationsModule } from './invitations/invitations.module';
 // import { VenuesModule } from './venues/venues.module';
-// import { FriendshipsModule } from './friendships/friendships.module';
-// import { PostsModule } from './posts/posts.module';
+import { FriendshipsModule } from './friendships/friendships.module';
+import { PostsModule } from './posts/posts.module';
 // import { CommentsModule } from './comments/comments.module';
 // import { LikesModule } from './likes/likes.module';
 // import { MentionsModule } from './mentions/mentions.module';
@@ -32,6 +32,7 @@ import { ResponseInterceptor } from './_common/interceptors/respose.interceptor'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { StatsModule } from './stats/stats.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { FeedModule } from './feed/feed.module';
 
 @Module({
   imports: [
@@ -60,11 +61,12 @@ import { DashboardModule } from './dashboard/dashboard.module';
     MailModule,
     StatsModule,
     DashboardModule,
+    FeedModule,
 
     // InvitationsModule,
     // VenuesModule,
-    // FriendshipsModule,
-    // PostsModule,
+    FriendshipsModule,
+    PostsModule,
     // CommentsModule,
     // LikesModule,
     // MentionsModule,

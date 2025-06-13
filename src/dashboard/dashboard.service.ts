@@ -53,13 +53,20 @@ export class DashboardService {
     return usersChart;
   }
 
+  async getDashboardMatchesChart() {
+    const matchesChart = await this.matchesService.getMatchesChart();
+    return matchesChart;
+  }
+
   async getDashboardCharts(currentUserId: string) {
     await this.checkAdmin(currentUserId);
 
     const usersChart = await this.usersService.getCreatedChart();
+    const matchesChart = await this.matchesService.getMatchesChart();
 
     return {
       users: usersChart,
+      matches: matchesChart,
     };
   }
 }
