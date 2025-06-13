@@ -7,6 +7,12 @@ import { CurrentUser } from 'src/_common/decorators/current-user.decorator';
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
+  @Post('mock')
+  createMock(@CurrentUser() currentUserId: string) {
+    console.log(currentUserId);
+    return this.postsService.createMock(10, currentUserId);
+  }
+
   @Get(':id')
   getPostById(@Param('id') postId: string) {
     return this.postsService.getPostById(postId);

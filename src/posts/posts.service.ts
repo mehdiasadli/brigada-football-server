@@ -7,6 +7,7 @@ import {
   PaginationBuilder,
   PaginationDto,
 } from 'src/_common/lib/query.pagination';
+import { createMockPosts } from 'src/_common/mock/posts';
 
 @Injectable()
 export class PostsService {
@@ -95,6 +96,14 @@ export class PostsService {
     ]);
 
     return { posts, total };
+  }
+
+  async createMock(count: number, authorId: string) {
+    const posts = createMockPosts(count);
+
+    return await Promise.all(
+      posts.map((post) => this.createPost(post, authorId)),
+    );
   }
 
   async createPost(createPostDto: CreatePostDto, currentUserId: string) {
