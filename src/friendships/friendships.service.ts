@@ -28,6 +28,28 @@ export class FriendshipsService {
     });
   }
 
+  async getFriendshipRequests(currentUserId: string) {
+    const requests = await this.prisma.friendship.findMany({
+      where: {
+        status: FriendshipStatus.PENDING,
+        receiverId: currentUserId,
+      },
+      include: {
+        requester: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    return requests;
+  }
+
   async getFriendsOfUser(userId: string) {
     const friendships = await this.prisma.friendship.findMany({
       where: {
@@ -41,7 +63,7 @@ export class FriendshipsService {
             firstName: true,
             lastName: true,
             avatar: true,
-            email: true,
+            username: true,
           },
         },
         receiver: {
@@ -50,7 +72,7 @@ export class FriendshipsService {
             firstName: true,
             lastName: true,
             avatar: true,
-            email: true,
+            username: true,
           },
         },
       },

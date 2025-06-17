@@ -21,6 +21,10 @@ import {
 } from 'src/_common/lib/query.pagination';
 import { createMockUsers } from 'src/_common/mock/users';
 import { FriendshipsService } from 'src/friendships/friendships.service';
+import {
+  CloudinaryImage,
+  CloudinaryService,
+} from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class UsersService {
@@ -30,6 +34,7 @@ export class UsersService {
     private readonly userPreferencesService: UserPreferencesService,
     @Inject(forwardRef(() => FriendshipsService))
     private readonly friendshipsService: FriendshipsService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   private publicUser<T extends Partial<User>>(user: T): T {
@@ -48,6 +53,80 @@ export class UsersService {
       dateOfBirth: user.dateOfBirth,
       placeOfBirth: user.placeOfBirth,
     } as unknown as T;
+  }
+
+  async deleteAvatar(currentUserId: string) {
+    const user = await this.findOne(currentUserId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.avatar) {
+      return true;
+    }
+
+    await this.cloudinaryService.deleteImagesByUrls([user.avatar]);
+
+    return await this.prisma.user.update({
+      where: { id: user.id },
+      data: { avatar: null },
+    });
+  }
+
+  async uploadAvatar(file: Express.Multer.File, currentUserId: string) {
+    const user = await this.findOne(currentUserId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    this.cloudinaryService.validateImageFile(file);
+
+    let avatar: CloudinaryImage | null = null;
+
+    if (user.avatar) {
+      // replace avatar
+      avatar = await this.replaceAvatar(file, user.avatar, user.id);
+    } else {
+      avatar = await this.createAvatar(file, user.id);
+    }
+
+    return await this.prisma.user.update({
+      where: { id: user.id },
+      data: { avatar: avatar.secureUrl },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        createdAt: true,
+        role: true,
+        avatar: true,
+      },
+    });
+  }
+
+  async replaceAvatar(
+    file: Express.Multer.File,
+    oldAvatarUrl: string | null,
+    userId: string,
+  ) {
+    return await this.cloudinaryService.replaceAvatar(
+      oldAvatarUrl,
+      file.buffer,
+      file.originalname,
+      userId,
+    );
+  }
+
+  async createAvatar(file: Express.Multer.File, userId: string) {
+    return await this.cloudinaryService.uploadAvatar(
+      file.buffer,
+      file.originalname,
+      userId,
+    );
   }
 
   async globalSearch(query: string, currentUserId: string) {

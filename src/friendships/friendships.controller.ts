@@ -4,7 +4,15 @@ import { CurrentUser } from 'src/_common/decorators/current-user.decorator';
 
 @Controller('friendships')
 export class FriendshipsController {
-  constructor(private readonly friendshipsService: FriendshipsService) {}
+  constructor(private readonly friendshipsService: FriendshipsService) {
+    console.log('FriendshipsController initialized');
+  }
+
+  @Get('requests')
+  async getFriendshipRequests(@CurrentUser() userId: string) {
+    console.log('getFriendshipRequests called with userId:', userId);
+    return await this.friendshipsService.getFriendshipRequests(userId);
+  }
 
   @Get('friends/:userId')
   async getFriendsOfUser(@Param('userId') userId: string) {

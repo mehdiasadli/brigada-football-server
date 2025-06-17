@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { appConfig } from './_common/config';
 import helmet from 'helmet';
-// import { printGraph } from './_common/print-graph';
+import { printGraph } from './_common/print-graph';
 
 async function bootstrap() {
   console.log('Starting application...');
@@ -17,7 +17,7 @@ async function bootstrap() {
 
   console.log('Memory usage after app creation:', process.memoryUsage());
 
-  // printGraph(app);
+  printGraph(app);
 
   app.enableCors({ origin: appConfig.CLIENT_URL });
   app.setGlobalPrefix('api');

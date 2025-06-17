@@ -34,6 +34,7 @@ import { StatsModule } from './stats/stats.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { FeedModule } from './feed/feed.module';
 import { SearchModule } from './search/search.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { SearchModule } from './search/search.module';
     CommentsModule,
     LikesModule,
     SearchModule,
+    CloudinaryModule,
     // MentionsModule,
     // PostAttachmentsModule,
     // PollsModule,

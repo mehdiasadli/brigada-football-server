@@ -17,6 +17,9 @@ export const configSchema = z.object({
   MAIL_SENDER_ADDRESS: z.string().email(),
   MAIL_SENDER_NAME: z.string(),
   PASSWORD_SPECIAL_CHARS: z.string().min(1),
+  CLOUDINARY_CLOUD_NAME: z.string().min(1),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
   MOBILE_NUMBER_OPERATORS: z
     .string()
     .regex(/[\d,]+/)

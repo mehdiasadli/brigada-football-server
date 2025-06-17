@@ -7,6 +7,8 @@ import {
   Query,
   Post,
   Delete,
+  UploadedFile,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateRoleDto } from './dto/update-user.dto';
@@ -14,6 +16,8 @@ import { CurrentUser } from 'src/_common/decorators/current-user.decorator';
 import { PaginationDto } from 'src/_common/lib/query.pagination';
 import { SearchDto } from 'src/_common/lib/query.search';
 import { OrderDto } from 'src/_common/lib/query.order';
+import { UploadAvatar } from 'src/_common/multer';
+import { Request } from 'express';
 
 @Controller('users')
 export class UsersController {
@@ -71,5 +75,20 @@ export class UsersController {
   @Delete(':id')
   delete(@Param('id') id: string, @CurrentUser() currentUserId: string) {
     return this.usersService.delete(id, currentUserId);
+  }
+
+  @Put('avatar/upload')
+  @UploadAvatar()
+  uploadAvatar(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() currentUserId: string,
+  ) {
+    return this.usersService.uploadAvatar(file, currentUserId);
+  }
+
+  @Delete('avatar/delete')
+  deleteAvatar(@CurrentUser() currentUserId: string) {
+    return this.usersService.deleteAvatar(currentUserId);
   }
 }

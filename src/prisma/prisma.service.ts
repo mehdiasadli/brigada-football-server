@@ -6,10 +6,6 @@ import { appConfig } from 'src/_common/config';
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
     super({
-      log:
-        appConfig.NODE_ENV === 'production'
-          ? ['error']
-          : ['query', 'info', 'warn', 'query'],
       datasources: {
         db: {
           url: appConfig.DATABASE_URL,
