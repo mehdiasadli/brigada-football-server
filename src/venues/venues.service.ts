@@ -137,13 +137,69 @@ export class VenuesService {
       include: {
         creator: {
           select: {
+            id: true,
             firstName: true,
             lastName: true,
             avatar: true,
             username: true,
           },
         },
-        matches: true,
+        matches: {
+          where: {
+            OR: [
+              {
+                status: MatchStatus.COMPLETED,
+              },
+              {
+                status: MatchStatus.PENDING,
+              },
+            ],
+          },
+          orderBy: [
+            {
+              status: 'asc',
+            },
+            {
+              startTime: 'desc',
+            },
+          ],
+          take: 4,
+          include: {
+            venue: {
+              select: {
+                id: true,
+                name: true,
+                latitude: true,
+                longitude: true,
+              },
+            },
+            teams: {
+              select: {
+                id: true,
+                name: true,
+                players: {
+                  select: {
+                    id: true,
+                    assists: true,
+                    goals: true,
+                    isCaptain: true,
+                    name: true,
+                    positions: true,
+                    rating: true,
+                    user: {
+                      select: {
+                        avatar: true,
+                        firstName: true,
+                        lastName: true,
+                        username: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -179,7 +235,7 @@ export class VenuesService {
     }
 
     const venue = await this.prisma.venue.create({
-      data: createVenueDto,
+      data: { ...createVenueDto, creatorId: user.id },
     });
 
     return venue;
