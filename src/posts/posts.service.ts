@@ -18,6 +18,14 @@ export class PostsService {
     private readonly friendshipsService: FriendshipsService,
   ) {}
 
+  async getPostCountOfUser(userId: string) {
+    return this.prisma.post.count({
+      where: {
+        authorId: userId,
+      },
+    });
+  }
+
   async globalSearch(query: string, currentUserId: string) {
     const friends =
       await this.friendshipsService.getFriendsOfUser(currentUserId);
@@ -239,6 +247,16 @@ export class PostsService {
     ]);
 
     return pagination.paginate(posts, total);
+  }
+
+  async findOne(postId: string) {
+    const post = await this.prisma.post.findUnique({
+      where: {
+        id: postId,
+      },
+    });
+
+    return post;
   }
 
   async getPostById(postId: string, currentUserId: string) {

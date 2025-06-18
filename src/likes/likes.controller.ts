@@ -6,12 +6,20 @@ import { CurrentUser } from 'src/_common/decorators/current-user.decorator';
 export class LikesController {
   constructor(private readonly likesService: LikesService) {}
 
-  @Post(':postId')
+  @Post('post/:postId')
   async likePost(
     @Param('postId') postId: string,
     @CurrentUser() userId: string,
   ) {
-    return this.likesService.toggleLike(postId, userId);
+    return this.likesService.togglePostLike(postId, userId);
+  }
+
+  @Post('comment/:commentId')
+  async likeComment(
+    @Param('commentId') commentId: string,
+    @CurrentUser() userId: string,
+  ) {
+    return this.likesService.toggleCommentLike(commentId, userId);
   }
 
   @Get('post/:postId')

@@ -6,6 +6,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class LikesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getLikeCountOfUser(userId: string) {
+    return this.prisma.like.count({
+      where: {
+        userId,
+      },
+    });
+  }
+
   async getLikesOfPost(postId: string) {
     return this.prisma.like.findMany({
       where: {
@@ -47,8 +55,8 @@ export class LikesService {
     });
   }
 
-  async toggleLike(postId: string, currentUserId: string) {
-    const like = await this.getLike(postId, currentUserId);
+  async togglePostLike(postId: string, currentUserId: string) {
+    const like = await this.getLikeOfPost(postId, currentUserId);
 
     if (like) {
       await this.unlikePost(like.id);
@@ -66,16 +74,35 @@ export class LikesService {
     };
   }
 
+  async toggleCommentLike(commentId: string, currentUserId: string) {
+    const like = await this.getLikeOfComment(commentId, currentUserId);
+
+    if (like) {
+      await this.unlikeComment(like.id);
+
+      return {
+        type: 'unliked',
+      };
+    }
+
+    const newLike = await this.likeComment(commentId, currentUserId);
+
+    return {
+      type: 'liked',
+      like: newLike,
+    };
+  }
+
   async getLikeById(id: string) {
-    return this.prisma.like.findUnique({
+    return await this.prisma.like.findUnique({
       where: {
         id,
       },
     });
   }
 
-  async getLike(postId: string, userId: string) {
-    return this.prisma.like.findFirst({
+  async getLikeOfPost(postId: string, userId: string) {
+    return await this.prisma.like.findFirst({
       where: {
         userId,
         postId,
@@ -83,8 +110,17 @@ export class LikesService {
     });
   }
 
+  async getLikeOfComment(commentId: string, userId: string) {
+    return await this.prisma.like.findFirst({
+      where: {
+        userId,
+        commentId,
+      },
+    });
+  }
+
   async likePost(postId: string, currentUserId: string) {
-    return this.prisma.like.create({
+    return await this.prisma.like.create({
       data: {
         userId: currentUserId,
         postId,
@@ -104,8 +140,37 @@ export class LikesService {
     });
   }
 
+  async likeComment(commentId: string, currentUserId: string) {
+    return await this.prisma.like.create({
+      data: {
+        userId: currentUserId,
+        commentId,
+        type: LikeType.COMMENT,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+
   async unlikePost(likeId: string) {
-    return this.prisma.like.delete({
+    return await this.prisma.like.delete({
+      where: {
+        id: likeId,
+      },
+    });
+  }
+
+  async unlikeComment(likeId: string) {
+    return await this.prisma.like.delete({
       where: {
         id: likeId,
       },

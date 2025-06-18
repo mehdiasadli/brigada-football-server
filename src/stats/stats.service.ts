@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { CommentsService } from 'src/comments/comments.service';
+import { LikesService } from 'src/likes/likes.service';
 import { MatchesService } from 'src/matches/matches.service';
 import { PlayersService } from 'src/players/players.service';
+import { PostsService } from 'src/posts/posts.service';
 
 @Injectable()
 export class StatsService {
   constructor(
     private readonly matchesService: MatchesService,
     private readonly playersService: PlayersService,
+    private readonly postsService: PostsService,
+    private readonly commentsService: CommentsService,
+    private readonly likesService: LikesService,
   ) {}
 
   async calculateStats(userId: string) {
@@ -14,6 +20,14 @@ export class StatsService {
       await this.matchesService.calculateCreatedMatchesCount(userId);
     const playerStats = await this.playersService.calculatePlayerStats(userId);
     const ratingCount = await this.playersService.getRatingCount(userId);
+    const postCount = await this.postsService.getPostCountOfUser(userId);
+    const commentCount =
+      await this.commentsService.getCommentCountOfUser(userId);
+    const likeCount = await this.likesService.getLikeCountOfUser(userId);
+
+    const averageRating = playerStats._avg.rating
+      ? Number(playerStats._avg.rating.toFixed(2))
+      : null;
 
     return {
       userId,
@@ -22,9 +36,10 @@ export class StatsService {
       matchesPlayed: playerStats._count.id,
       matchesCreated,
       totalRatingCount: ratingCount,
-      averageRating: playerStats._avg.rating
-        ? Number(playerStats._avg.rating.toFixed(2))
-        : null,
+      averageRating,
+      totalPosts: postCount,
+      totalComments: commentCount,
+      totalLikes: likeCount,
     };
   }
 
