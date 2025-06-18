@@ -707,7 +707,18 @@ export class UsersService {
       }),
     ]);
 
-    return pagination.paginate(users, total);
+    const usersWithActivityPoints = await Promise.all(
+      users.map(async (user) => {
+        const activityPoints = await this.getUserActivityPoints(user.id);
+
+        return {
+          ...user,
+          activity: activityPoints,
+        };
+      }),
+    );
+
+    return pagination.paginate(usersWithActivityPoints, total);
   }
 
   async findOne(id: string) {
