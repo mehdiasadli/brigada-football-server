@@ -165,6 +165,15 @@ export class VenuesService {
           ],
           take: 4,
           include: {
+            creator: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                username: true,
+              },
+            },
             venue: {
               select: {
                 id: true,

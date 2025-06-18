@@ -35,9 +35,9 @@ export class MatchesController {
   @Post()
   async createMatch(
     @Body() createMatchDto: CreateMatchDto,
-    @CurrentUser() userId: string,
+    @CurrentUser() currentUserId: string,
   ) {
-    return this.matchesService.create(createMatchDto, userId);
+    return this.matchesService.create(createMatchDto, currentUserId);
   }
 
   @Get('/:id')
