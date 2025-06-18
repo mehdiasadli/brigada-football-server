@@ -408,14 +408,4 @@ export class PlayersService {
 
     return updatedPlayer;
   }
-
-  private async validateUser(userId: string): Promise<boolean> {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-        deletedAt: null,
-      },
-    });
-    return !!user;
-  }
 }
