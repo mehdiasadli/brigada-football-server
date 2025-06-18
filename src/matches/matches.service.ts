@@ -25,6 +25,76 @@ export class MatchesService {
     private readonly friendshipsService: FriendshipsService,
   ) {}
 
+  async globalSearch(query: string) {
+    const queryDate = new Date(query);
+    const isDate = !isNaN(queryDate.getTime());
+
+    const startDate = new Date(queryDate.setDate(queryDate.getDate() - 2));
+    const endDate = new Date(queryDate.setDate(queryDate.getDate() + 2));
+
+    const matches = await this.prisma.match.findMany({
+      where: {
+        OR: [
+          {
+            startTime: !isDate
+              ? undefined
+              : {
+                  gte: startDate,
+                  lte: endDate,
+                },
+          },
+          {
+            teams: {
+              some: {
+                name: {
+                  contains: query,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          },
+          {
+            venueName: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            teams: {
+              some: {
+                players: {
+                  some: {
+                    name: {
+                      contains: query,
+                      mode: 'insensitive',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        venueName: true,
+        startTime: true,
+        status: true,
+        teams: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      take: 3,
+    });
+
+    return matches.map((match) => ({
+      item: match,
+      type: 'match' as const,
+    }));
+  }
+
   async getMatchesForFeed(currentUserId: string, paginationDto: PaginationDto) {
     const pagination = new PaginationBuilder(paginationDto);
 

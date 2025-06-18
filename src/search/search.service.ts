@@ -19,8 +19,9 @@ export class SearchService {
     const posts = await this.postsService.globalSearch(query, currentUserId);
     const users = await this.usersService.globalSearch(query, currentUserId);
     const venues = await this.venuesService.globalSearch(query);
+    const matches = await this.matchesService.globalSearch(query);
 
-    return this.shuffleArray([...posts, ...users, ...venues]);
+    return this.shuffleArray([...posts, ...users, ...venues, ...matches]);
   }
 
   private shuffleArray<T>(array: T[]): T[] {
