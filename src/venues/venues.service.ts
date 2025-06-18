@@ -24,6 +24,44 @@ export class VenuesService {
     private readonly usersService: UsersService,
   ) {}
 
+  async globalSearch(query: string) {
+    const venues = await this.prisma.venue.findMany({
+      where: {
+        OR: [
+          {
+            name: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            address: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            addressDescription: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+      },
+      take: 3,
+    });
+
+    return venues.map((venue) => ({
+      item: venue,
+      type: 'venue' as const,
+    }));
+  }
+
   async createMock(count: number, currentUserId: string) {
     const venues = createMockVenues(count);
 
