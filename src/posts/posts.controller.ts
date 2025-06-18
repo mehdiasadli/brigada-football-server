@@ -11,6 +11,7 @@ import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CurrentUser } from 'src/_common/decorators/current-user.decorator';
 import { PaginationDto } from 'src/_common/lib/query.pagination';
+import { OrderDto } from 'src/_common/lib/query.order';
 
 @Controller('posts')
 export class PostsController {
@@ -18,7 +19,6 @@ export class PostsController {
 
   @Post('mock')
   createMock(@CurrentUser() currentUserId: string) {
-    console.log(currentUserId);
     return this.postsService.createMock(10, currentUserId);
   }
 
@@ -54,5 +54,10 @@ export class PostsController {
   @Delete(':id')
   delete(@Param('id') postId: string) {
     return this.postsService.deletePost(postId);
+  }
+
+  @Get()
+  findMany(@Query() paginationDto: PaginationDto, @Query() orderDto: OrderDto) {
+    return this.postsService.findMany(paginationDto, orderDto);
   }
 }

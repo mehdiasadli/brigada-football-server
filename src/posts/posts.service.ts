@@ -9,6 +9,7 @@ import {
 } from 'src/_common/lib/query.pagination';
 import { createMockPosts } from 'src/_common/mock/posts';
 import { PostVisibility } from '@prisma/client';
+import { OrderBuilder, OrderDto } from 'src/_common/lib/query.order';
 
 @Injectable()
 export class PostsService {
@@ -176,6 +177,44 @@ export class PostsService {
     }
 
     return monthlyData;
+  }
+
+  async findMany(paginationDto: PaginationDto, orderDto: OrderDto) {
+    const pagination = new PaginationBuilder(paginationDto);
+    const order = new OrderBuilder(orderDto);
+
+    const [posts, total] = await Promise.all([
+      this.prisma.post.findMany({
+        ...pagination.use(),
+        orderBy: order.use(),
+        include: {
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+          likes: {
+            select: {
+              userId: true,
+            },
+          },
+          attachments: true,
+          author: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+              role: true,
+              username: true,
+            },
+          },
+        },
+      }),
+      this.prisma.post.count(),
+    ]);
+
+    return pagination.paginate(posts, total);
   }
 
   async getPostsOfUser(
