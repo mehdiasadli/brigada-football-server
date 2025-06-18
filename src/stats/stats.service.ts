@@ -4,6 +4,7 @@ import { LikesService } from 'src/likes/likes.service';
 import { MatchesService } from 'src/matches/matches.service';
 import { PlayersService } from 'src/players/players.service';
 import { PostsService } from 'src/posts/posts.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class StatsService {
@@ -13,6 +14,7 @@ export class StatsService {
     private readonly postsService: PostsService,
     private readonly commentsService: CommentsService,
     private readonly likesService: LikesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async calculateStats(userId: string) {
@@ -24,6 +26,8 @@ export class StatsService {
     const commentCount =
       await this.commentsService.getCommentCountOfUser(userId);
     const likeCount = await this.likesService.getLikeCountOfUser(userId);
+    const activityPoints =
+      await this.usersService.getUserActivityPoints(userId);
 
     const averageRating = playerStats._avg.rating
       ? Number(playerStats._avg.rating.toFixed(2))
@@ -40,6 +44,7 @@ export class StatsService {
       totalPosts: postCount,
       totalComments: commentCount,
       totalLikes: likeCount,
+      activity: activityPoints,
     };
   }
 

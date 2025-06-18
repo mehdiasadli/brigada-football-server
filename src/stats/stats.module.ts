@@ -6,6 +6,7 @@ import { MatchesModule } from 'src/matches/matches.module';
 import { PostsModule } from 'src/posts/posts.module';
 import { CommentsModule } from 'src/comments/comments.module';
 import { LikesModule } from 'src/likes/likes.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { LikesModule } from 'src/likes/likes.module';
     PostsModule,
     CommentsModule,
     LikesModule,
+    UsersModule,
   ],
   controllers: [StatsController],
   providers: [StatsService],

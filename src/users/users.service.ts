@@ -288,6 +288,68 @@ export class UsersService {
     return monthlyData;
   }
 
+  async getUserActivityPoints(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        _count: {
+          select: {
+            comments: true,
+            likes: true,
+            posts: true,
+            played: {
+              where: {
+                team: {
+                  match: {
+                    status: MatchStatus.COMPLETED,
+                  },
+                },
+              },
+            },
+            createdMatches: {
+              where: {
+                status: MatchStatus.COMPLETED,
+              },
+            },
+            createdVenues: {
+              where: {
+                matches: {
+                  some: {
+                    status: MatchStatus.COMPLETED,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const weights = {
+      posts: 5,
+      comments: 2,
+      likes: 1,
+      createdMatches: 10,
+      played: 5,
+      createdVenues: 12,
+    } as const;
+
+    let points = 0;
+
+    for (const [key, value] of Object.entries(weights)) {
+      points += user._count[key] * value;
+    }
+
+    return points;
+  }
+
   async getUsersStats() {
     const totalUsers = await this.prisma.user.count({
       where: {
