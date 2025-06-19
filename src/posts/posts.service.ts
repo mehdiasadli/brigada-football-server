@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { FriendshipsService } from 'src/friendships/friendships.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -10,6 +15,8 @@ import {
 import { createMockPosts } from 'src/_common/mock/posts';
 import { PostVisibility } from '@prisma/client';
 import { OrderBuilder, OrderDto } from 'src/_common/lib/query.order';
+import { PollsService } from 'src/polls/polls.service';
+import { PollDto } from 'src/polls/entities/poll.entity';
 
 @Injectable()
 export class PostsService {
@@ -17,6 +24,8 @@ export class PostsService {
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
     private readonly friendshipsService: FriendshipsService,
+    @Inject(forwardRef(() => PollsService))
+    private readonly pollsService: PollsService,
   ) {}
 
   async getPostCountOfUser(userId: string) {
@@ -426,6 +435,7 @@ export class PostsService {
 
   async createPost(createPostDto: CreatePostDto, currentUserId: string) {
     const { isPinned } = createPostDto;
+    const { poll, ...data } = createPostDto;
 
     if (isPinned) {
       await this.prisma.post.updateMany({
@@ -436,12 +446,18 @@ export class PostsService {
 
     const post = await this.prisma.post.create({
       data: {
-        ...createPostDto,
+        ...data,
         authorId: currentUserId,
       },
     });
 
-    return post;
+    let postPoll: PollDto | null = null;
+
+    if (poll) {
+      postPoll = await this.pollsService.create(poll, post.id);
+    }
+
+    return { post, poll: postPoll };
   }
 
   async deletePost(postId: string) {
