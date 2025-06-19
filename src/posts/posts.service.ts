@@ -410,7 +410,10 @@ export class PostsService {
             )
             .map((option) => option.id);
 
-    return { ...post, poll: { ...post.poll, userVotes } };
+    return {
+      ...post,
+      poll: post.poll === null ? null : { ...post.poll, userVotes },
+    };
   }
 
   async getPostsForFeed(currentUserId: string, paginationDto: PaginationDto) {
