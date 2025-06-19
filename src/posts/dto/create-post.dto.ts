@@ -13,7 +13,7 @@ export const createPostSchema = postSchema
   })
   .merge(
     z.object({
-      poll: createPollSchema.nullable(),
+      poll: createPollSchema.nullish(),
     }),
   );
 

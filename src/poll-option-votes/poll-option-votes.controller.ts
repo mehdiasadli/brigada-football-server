@@ -1,6 +1,7 @@
-import { Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { PollOptionVotesService } from './poll-option-votes.service';
 import { CurrentUser } from 'src/_common/decorators/current-user.decorator';
+import { CreatePollOptionVoteDto } from './dto/create-poll-option-vote.dto';
 
 @Controller('poll-option-votes')
 export class PollOptionVotesController {
@@ -8,11 +9,14 @@ export class PollOptionVotesController {
     private readonly pollOptionVotesService: PollOptionVotesService,
   ) {}
 
-  @Post(':optionId')
+  @Post()
   async create(
-    @Param('optionId') optionId: string,
+    @Body() createPollOptionVoteDto: CreatePollOptionVoteDto,
     @CurrentUser() currentUserId: string,
   ) {
-    return this.pollOptionVotesService.create(optionId, currentUserId);
+    return this.pollOptionVotesService.vote(
+      createPollOptionVoteDto,
+      currentUserId,
+    );
   }
 }

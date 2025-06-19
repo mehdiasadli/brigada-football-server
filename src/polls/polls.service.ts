@@ -51,9 +51,16 @@ export class PollsService {
       throw new NotFoundException('Post not found');
     }
 
+    const { options, ...data } = createPollDto;
+
     return await this.prisma.poll.create({
       data: {
-        ...createPollDto,
+        ...data,
+        options: {
+          createMany: {
+            data: options,
+          },
+        },
         postId,
       },
     });

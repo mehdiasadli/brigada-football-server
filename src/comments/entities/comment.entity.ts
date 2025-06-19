@@ -5,7 +5,7 @@ export const commentSchema = z.object({
   id: z.string(),
   content: z.string(),
   createdAt: z.date(),
-  editedAt: z.date().nullable(),
+  editedAt: z.date().nullish(),
   updatedAt: z.date(),
   postId: z.string(),
   authorId: z.string(),

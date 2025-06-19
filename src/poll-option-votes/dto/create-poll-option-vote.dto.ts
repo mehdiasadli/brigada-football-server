@@ -1,10 +1,8 @@
 import { createZodDto } from 'nestjs-zod';
-import { pollOptionVoteSchema } from '../entities/poll-option-vote.entity';
+import { z } from 'zod';
 
-export const createPollOptionVoteSchema = pollOptionVoteSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const createPollOptionVoteSchema = z.object({
+  optionIds: z.array(z.string().uuid()).min(1),
 });
 
 export class CreatePollOptionVoteDto extends createZodDto(

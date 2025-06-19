@@ -208,6 +208,17 @@ export class PostsService {
             },
           },
           attachments: true,
+          poll: {
+            select: {
+              id: true,
+              content: true,
+              _count: {
+                select: {
+                  options: true,
+                },
+              },
+            },
+          },
           author: {
             select: {
               id: true,
@@ -268,6 +279,17 @@ export class PostsService {
             },
           },
           attachments: true,
+          poll: {
+            select: {
+              id: true,
+              content: true,
+              _count: {
+                select: {
+                  options: true,
+                },
+              },
+            },
+          },
           author: {
             select: {
               id: true,
@@ -336,6 +358,31 @@ export class PostsService {
           },
         },
         attachments: true,
+        poll: {
+          select: {
+            id: true,
+            content: true,
+            isAnonymous: true,
+            maxVotes: true,
+            options: {
+              select: {
+                id: true,
+                _count: {
+                  select: {
+                    votes: true,
+                  },
+                },
+                content: true,
+                image: true,
+                votes: {
+                  select: {
+                    userId: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         author: {
           select: {
             id: true,
@@ -352,7 +399,18 @@ export class PostsService {
       throw new NotFoundException('Post not found');
     }
 
-    return post;
+    // check user has voted on the poll
+    // if so, which options
+    const userVotes =
+      post.poll === null
+        ? []
+        : post.poll.options
+            .filter((option) =>
+              option.votes.some((vote) => vote.userId === currentUserId),
+            )
+            .map((option) => option.id);
+
+    return { ...post, poll: { ...post.poll, userVotes } };
   }
 
   async getPostsForFeed(currentUserId: string, paginationDto: PaginationDto) {
@@ -395,6 +453,17 @@ export class PostsService {
               venue: true,
               team: true,
               player: true,
+            },
+          },
+          poll: {
+            select: {
+              id: true,
+              content: true,
+              _count: {
+                select: {
+                  options: true,
+                },
+              },
             },
           },
           author: {
@@ -457,7 +526,7 @@ export class PostsService {
       postPoll = await this.pollsService.create(poll, post.id);
     }
 
-    return { post, poll: postPoll };
+    return { ...post, poll: postPoll };
   }
 
   async deletePost(postId: string) {

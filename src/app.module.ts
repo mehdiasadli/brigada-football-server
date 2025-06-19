@@ -15,9 +15,9 @@ import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
 // import { MentionsModule } from './mentions/mentions.module';
 // import { PostAttachmentsModule } from './post-attachments/post-attachments.module';
-// import { PollsModule } from './polls/polls.module';
-// import { PollOptionsModule } from './poll-options/poll-options.module';
-// import { PollOptionVotesModule } from './poll-option-votes/poll-option-votes.module';
+import { PollsModule } from './polls/polls.module';
+import { PollOptionsModule } from './poll-options/poll-options.module';
+import { PollOptionVotesModule } from './poll-option-votes/poll-option-votes.module';
 // import { PollOptionAttachmentsModule } from './poll-option-attachments/poll-option-attachments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { appConfig } from './_common/config';
@@ -75,9 +75,9 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     CloudinaryModule,
     // MentionsModule,
     // PostAttachmentsModule,
-    // PollsModule,
-    // PollOptionsModule,
-    // PollOptionVotesModule,
+    PollsModule,
+    PollOptionsModule,
+    PollOptionVotesModule,
     // PollOptionAttachmentsModule,
   ],
   controllers: [AppController],

@@ -29,7 +29,7 @@ export const userSchema = z.object({
       required_error: 'Deleted at is required',
       invalid_type_error: 'Deleted at must be a date',
     })
-    .nullable(),
+    .nullish(),
   email: z
     .string({
       required_error: 'Email is required',
@@ -69,7 +69,7 @@ export const userSchema = z.object({
     .url({
       message: 'Invalid avatar',
     })
-    .nullable(),
+    .nullish(),
   mobileNumber: z
     .string({
       required_error: 'Mobile number is required',

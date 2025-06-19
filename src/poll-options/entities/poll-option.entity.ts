@@ -6,8 +6,8 @@ export const pollOptionSchema = z.object({
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   pollId: z.string().uuid(),
-  content: z.string().nullable(),
-  image: z.string().nullable(),
+  content: z.string().nullish(),
+  image: z.string().nullish(),
 });
 
 export class PollOptionDto extends createZodDto(pollOptionSchema) {}
